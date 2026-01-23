@@ -13,7 +13,7 @@ from construct import (
 )
 
 from itksn import pixels
-from itksn.common import EnumStr
+from itksn.common import EnumByteString, EnumStr
 
 SerialNumberStruct = "SerialNumber" / Struct(
     "atlas_project" / EnumStr(Bytes(2), atlas_detector=b"20"),
@@ -65,7 +65,12 @@ SerialNumberStruct = "SerialNumber" / Struct(
         default=PaddedString(2, "utf8"),
     ),
     "component_code"
-    / Computed(lambda ctx: re.sub(r"(\d)p(\d)", r"\1.\2", ctx._component_code)),  # type: ignore[arg-type,return-value]  # pylint: disable=protected-access
+    / Computed(
+        lambda ctx: EnumByteString.new(  # type: ignore[arg-type,return-value]
+            ctx._component_code.bytevalue,
+            re.sub(r"(\d)p(\d)", r"\1.\2", ctx._component_code),
+        )
+    ),
     "identifier"
     / Switch(
         this.subproject_code,
